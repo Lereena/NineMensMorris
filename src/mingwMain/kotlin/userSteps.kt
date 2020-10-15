@@ -44,8 +44,11 @@ fun validUserStep(board: Board, userColor: GameColor): Pair<Int, Int> {
             println("Фишка уже на этой позиции")
             continue
         }
-        // TODO добавить проверку на движение по линиям
-
+        val userCount = board.count { x -> x == userColor }
+        if (userCount > 3 && !neighbors[first].contains(second)) {
+            println("На этой стадии вы не можете двигаться не по линиям")
+            continue
+        }
         return Pair(first, second)
     }
 }

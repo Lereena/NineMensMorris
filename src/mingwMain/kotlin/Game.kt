@@ -1,5 +1,6 @@
 package ninemensmorris
 
+import platform.posix.ino_t
 import kotlin.system.exitProcess
 
 typealias Board = Array<GameColor>
@@ -13,8 +14,6 @@ class Game(first: Player) {
     private val depth = 3
     private val alpha = Int.MIN_VALUE;
     private val beta = Int.MAX_VALUE
-    private var pruned = 0
-    private var reachedStates = 0
 
     fun start() {
         println("Первая стадия: начальная расстановка")
@@ -41,16 +40,25 @@ class Game(first: Player) {
         println("Вторая стадия: движение")
         while (true) {
             if (turn == Player.AI) {
-                secondStageAIStep()
-//                printBoard(board)
+                val aiStep = secondStageAIStep()
+                println("${aiStep.first} ${aiStep.second}")
+                printErr("${aiStep.first} ${aiStep.second}")
+                printBoard(board)
+                val userStep = secondStageUserStep()
+                println("${userStep.first} ${userStep.second}")
+                printErr("${userStep.first} ${userStep.second}")
+                printBoard(board)
             } else {
-                secondStageUserStep()
-//                printBoard(board)
-                when {
-                    evaluateState() == aiColor -> println("Компьютер выиграл")
-                    evaluateState() == userColor -> println("Вы выиграли")
-                }
+                val userStep = secondStageUserStep()
+                println("${userStep.first} ${userStep.second}")
+                printErr("${userStep.first} ${userStep.second}")
+                printBoard(board)
+                val aiStep = secondStageAIStep()
+                println("${aiStep.first} ${aiStep.second}")
+                printErr("${aiStep.first} ${aiStep.second}")
+                printBoard(board)
             }
+            evaluateState()
         }
     }
 
@@ -58,18 +66,17 @@ class Game(first: Player) {
         println("Ход пользователя: ")
         val position = validUserTo(board)
         board[position] = userColor
-//        turn = Player.AI
         return position
     }
 
-    private fun secondStageUserStep() {
+    private fun secondStageUserStep(): Pair<Int, Int> {
         println("Ход пользователя (два числа через пробел): ")
         val step = validUserStep(board, userColor)
         val fromPosition = step.first
         val toPosition = step.second
         board[fromPosition] = GameColor.F
         board[toPosition] = userColor
-//        turn = Player.AI
+        return step
     }
 
     private fun firstStageAIStep(step: Int): Int {
@@ -130,7 +137,7 @@ class Game(first: Player) {
 //        return nextMovePoint
 //    }
 
-    private fun secondStageAIStep() {
+    private fun secondStageAIStep(): Pair<Int, Int> {
         print("Ход компьютера: ")
         val move: Pair<Int, Int>
         val evaluation = alphaBetaPruning(false, board, aiColor, userColor, depth, alpha, beta)
@@ -141,19 +148,24 @@ class Game(first: Player) {
             move = subtractBoards(board, evaluation.board)
             board = evaluation.board
         }
-        println("${move.first} ${move.second}")
+//        println("${move.first} ${move.second}")
 //        turn = Player.USER
         printErr("${move.first} ${move.second}")
+        return move
     }
 
-    private fun evaluateState(): GameColor {
-        val white = board.count { x -> x == GameColor.W }
-        val black = board.count { x -> x == GameColor.B }
-        if (white <= 2)
-            return GameColor.B
-        if (black <= 2)
-            return GameColor.W
-        return GameColor.F
+    private fun evaluateState() {
+        val user = board.count { x -> x == userColor }
+        val ai = board.count { x -> x == aiColor }
+        // TODO проверить на ничью
+        if (user <= 2) {
+            println("Компьютер выиграл")
+            exitProcess(0)
+        }
+        if (ai <= 2) {
+            println("Вы выиграли")
+            exitProcess(3)
+        }
     }
 }
 
