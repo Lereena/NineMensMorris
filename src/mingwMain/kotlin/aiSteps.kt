@@ -15,7 +15,12 @@ fun pointForMill(board: Board, userColor: GameColor, point: Int): Int {
     val neighbors = linesNeighbors[point]
     val first = checkTriple(board, userColor, neighbors[0], neighbors[1])
     val second = checkTriple(board, userColor, neighbors[2], neighbors[3])
-    return if (first != -1) first else second
+    if (first != -1 && freePlace(board, first))
+        return first
+    if (second != -1 && freePlace(board, second))
+        return second
+    return -1
+//    return if (first != -1) first else second
 }
 
 fun checkTriple(board: Board, userColor: GameColor, p1: Int, p2: Int): Int {

@@ -20,28 +20,32 @@ class Game(first: Player) {
         println("Первая стадия: начальная расстановка")
         for (step in 1..9) {
             if (turn == Player.USER) {
-                printBoard(board)
-                firstStageUserStep()
+                val userStep = firstStageUserStep()
+                println("$userStep")
                 printBoard(board)
                 val aiStep = firstStageAIStep(step)
-                println(" $aiStep")
+                printErr("$aiStep")
+                println("$aiStep")
+                printBoard(board)
             } else {
-                printBoard(board)
                 val aiStep = firstStageAIStep(step)
-                println(" $aiStep")
+                println("$aiStep")
+                printErr("$aiStep")
                 printBoard(board)
-                firstStageUserStep()
+                val userStep = firstStageUserStep()
+                println("$userStep")
+                printBoard(board)
             }
         }
 
         println("Вторая стадия: движение")
         while (true) {
             if (turn == Player.AI) {
-                printBoard(board)
                 secondStageAIStep()
+//                printBoard(board)
             } else {
-                printBoard(board)
                 secondStageUserStep()
+//                printBoard(board)
                 when {
                     evaluateState() == aiColor -> println("Компьютер выиграл")
                     evaluateState() == userColor -> println("Вы выиграли")
@@ -51,7 +55,7 @@ class Game(first: Player) {
     }
 
     private fun firstStageUserStep(): Int {
-        print("Ход пользователя:")
+        println("Ход пользователя: ")
         val position = validUserTo(board)
         board[position] = userColor
         turn = Player.AI
@@ -59,7 +63,7 @@ class Game(first: Player) {
     }
 
     private fun secondStageUserStep() {
-        println("Ход пользователя (два числа на разных строках):")
+        println("Ход пользователя (два числа на разных строках): ")
         val fromPosition = validUserFrom(board, userColor)
         val toPosition = validUserTo(board, fromPosition)
         board[fromPosition] = GameColor.F
@@ -68,8 +72,8 @@ class Game(first: Player) {
     }
 
     private fun firstStageAIStep(step: Int): Int {
-        print("Ход компьютера:")
-        if (step == 0) {
+        println("Ход компьютера: ")
+        if (step == 1) {
             nextMovePoint = randomMove(board, aiColor)
         } else {
             val point = nextMovePoint
@@ -80,7 +84,7 @@ class Game(first: Player) {
                     nextMovePoint = pointForMill
                 }
                 for (neighbor in neighbors[point])
-                    if (board[neighbor] == GameColor.F) {
+                    if (freePlace(board, neighbor)) {
                         board[neighbor] = aiColor
                         nextMovePoint = neighbor
                     }
