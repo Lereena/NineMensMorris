@@ -58,43 +58,77 @@ class Game(first: Player) {
         println("Ход пользователя: ")
         val position = validUserTo(board)
         board[position] = userColor
-        turn = Player.AI
+//        turn = Player.AI
         return position
     }
 
     private fun secondStageUserStep() {
-        println("Ход пользователя (два числа на разных строках): ")
-        val fromPosition = validUserFrom(board, userColor)
-        val toPosition = validUserTo(board, fromPosition)
+        println("Ход пользователя (два числа через пробел): ")
+        val step = validUserStep(board, userColor)
+        val fromPosition = step.first
+        val toPosition = step.second
         board[fromPosition] = GameColor.F
         board[toPosition] = userColor
-        turn = Player.AI
+//        turn = Player.AI
     }
 
     private fun firstStageAIStep(step: Int): Int {
         println("Ход компьютера: ")
         if (step == 1) {
             nextMovePoint = randomMove(board, aiColor)
-        } else {
-            val point = nextMovePoint
-            if (!closeMill(point, board)) {
-                val pointForMill = pointForMill(board, aiColor, point)
-                if (pointForMill != -1) {
-                    board[pointForMill] = aiColor
-                    nextMovePoint = pointForMill
-                }
-                for (neighbor in neighbors[point])
-                    if (freePlace(board, neighbor)) {
-                        board[neighbor] = aiColor
-                        nextMovePoint = neighbor
-                    }
-                nextMovePoint = randomMove(board, aiColor)
+            return nextMovePoint
+        }
+
+        val point = nextMovePoint
+        if (!closeMill(point, board)) {
+            val pointForMill = pointForMill(board, aiColor, point)
+            if (pointForMill != -1) {
+                board[pointForMill] = aiColor
+                nextMovePoint = pointForMill
+                return nextMovePoint
             }
         }
 
-        turn = Player.USER
+        val neighbors = neighbors[point]
+        for (neighbor in neighbors)
+            if (freePlace(board, neighbor)) {
+                board[neighbor] = aiColor
+                nextMovePoint = neighbor
+                return nextMovePoint
+            }
+
+        nextMovePoint = randomMove(board, aiColor)
+//        turn = Player.USER
         return nextMovePoint
     }
+
+//    private fun firstStageAIStep(step: Int): Int {
+//        println("Ход компьютера: ")
+//        if (step == 1) {
+//            nextMovePoint = randomMove(board, aiColor)
+//        } else {
+//            val point = nextMovePoint
+//            if (!closeMill(point, board)) {
+//                val pointForMill = pointForMill(board, aiColor, point)
+//                if (pointForMill != -1) {
+//                    board[pointForMill] = aiColor
+//                    nextMovePoint = pointForMill
+//                } else {
+//                    val neighbors = neighbors[point]
+//                    for (neighbor in neighbors)
+//                        if (freePlace(board, neighbor)) {
+//                            board[neighbor] = aiColor
+//                            nextMovePoint = neighbor
+//                            break
+//                        } else if (neighbor == neighbors[neighbors.size - 1])
+//                            nextMovePoint = randomMove(board, aiColor)
+//                }
+//            }
+//        }
+//
+//        turn = Player.USER
+//        return nextMovePoint
+//    }
 
     private fun secondStageAIStep() {
         print("Ход компьютера: ")
@@ -108,7 +142,8 @@ class Game(first: Player) {
             board = evaluation.board
         }
         println("${move.first} ${move.second}")
-        turn = Player.USER
+//        turn = Player.USER
+        printErr("${move.first} ${move.second}")
     }
 
     private fun evaluateState(): GameColor {
