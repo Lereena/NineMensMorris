@@ -17,7 +17,18 @@ fun readPosition(): Int {
     }
 }
 
-fun validUserStep(board: Board, userColor: GameColor): Pair<Int, Int> {
+fun validUserTo(board: Board): Int {
+    while (true) {
+        val position = readPosition()
+        if (!freePlace(board, position)) {
+            println("Это место уже занято")
+            continue
+        }
+        return position
+    }
+}
+
+fun validUserStep2(board: Board, userColor: GameColor): Pair<Int, Int> {
     var first: Int?
     var second: Int?
     while (true) {
@@ -52,31 +63,3 @@ fun validUserStep(board: Board, userColor: GameColor): Pair<Int, Int> {
         return Pair(first, second)
     }
 }
-
-fun validUserFrom(board: Board, userColor: GameColor): Int {
-    while (true) {
-        val position = readPosition()
-        if (board[position] != userColor) {
-            println("На этой позиции нет вашей фишки")
-            continue
-        }
-        return position
-    }
-}
-
-fun validUserTo(board: Board, startPosition: Int? = null): Int {
-    while (true) {
-        val position = readPosition()
-        if (!freePlace(board, position)) {
-            println("Это место уже занято")
-            continue
-        }
-        if (startPosition != null && position == startPosition) {
-            println("Фишка уже на этой позиции")
-            continue
-        }
-        // TODO добавить проверку на движение по линиям
-        return position
-    }
-}
-

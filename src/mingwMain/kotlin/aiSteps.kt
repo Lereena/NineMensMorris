@@ -32,52 +32,51 @@ fun checkTriple(board: Board, userColor: GameColor, p1: Int, p2: Int): Int {
 }
 
 fun alphaBetaPruning(
-    pl1: Boolean = false, board: Board, aiColor: GameColor, userColor: GameColor,
-    depth: Int, alpha: Int, beta: Int,
-    heur: (Board) -> Int = { x -> heuristics(x, aiColor, userColor) }
+        pl1: Boolean, board: Board, aiColor: GameColor, userColor: GameColor,
+        depth: Int, alpha: Int, beta: Int,
+        heur: (Board) -> Int = { x -> heuristics(x, aiColor, userColor) }
 ): Evaluation {
     val finalEvaluation = Evaluation()
     var currentAlpha = alpha
     var currentBeta = beta
-    if (depth != 0) {
-        var currentEvaluation: Evaluation
-        val possibleConfigurations =
-            if (pl1) stage23Moves(board, aiColor)
-            else invertedBoardList(stage23Moves(invertedBoard(board), aiColor))
-        for (configuration in possibleConfigurations) {
-            if (pl1) {
-                currentEvaluation =
-                    alphaBetaPruning(false, configuration, aiColor, userColor, depth - 1, currentAlpha, currentBeta)
-                if (currentEvaluation.evaluator > currentAlpha) {
-                    currentAlpha = currentEvaluation.evaluator
-                    finalEvaluation.board = configuration
-                }
-            } else {
-                currentEvaluation =
-                    alphaBetaPruning(true, configuration, aiColor, userColor, depth - 1, currentAlpha, currentBeta)
-                if (currentEvaluation.evaluator < currentBeta) {
-                    currentBeta = currentEvaluation.evaluator
-                    finalEvaluation.board = configuration
-                }
-            }
-            if (currentAlpha >= currentBeta)
-                break
-        }
+    if (depth == 0) {
         finalEvaluation.evaluator =
-            if (pl1) alpha else beta
-    } else {
-        finalEvaluation.evaluator =
-            if (pl1) heur(board)
-            else heur(invertedBoard(board))
+                if (pl1) heur(board)
+                else heur(invertedBoard(board))
+        return finalEvaluation
     }
+
+    val possibleConfigurations =
+            if (pl1) stage23Moves(board, aiColor)
+            else invertedBoardList(stage23Moves(invertedBoard(board), userColor))
+
+    for (configuration in possibleConfigurations) {
+        val currentEvaluation =
+                alphaBetaPruning(!pl1, configuration, aiColor, userColor, depth - 1, currentAlpha, currentBeta)
+        if (pl1) {
+            if (currentEvaluation.evaluator > currentAlpha) {
+                currentAlpha = currentEvaluation.evaluator
+                finalEvaluation.board = configuration
+            }
+        } else {
+            if (currentEvaluation.evaluator < currentBeta) {
+                currentBeta = currentEvaluation.evaluator
+                finalEvaluation.board = configuration
+            }
+        }
+        if (currentAlpha >= currentBeta)
+            break
+    }
+    finalEvaluation.evaluator =
+            if (pl1) currentAlpha else currentBeta
     return finalEvaluation
 }
 
-private fun stage23Moves(board: Board, aiColor: GameColor): Array<Board> {
-    return if (board.count { x -> x == aiColor } == 3)
-        moves(board, aiColor, 3)
+private fun stage23Moves(board: Board, playerColor: GameColor): Array<Board> {
+    return if (board.count { x -> x == playerColor } == 3)
+        moves(board, playerColor, 3)
     else
-        moves(board, aiColor, 2)
+        moves(board, playerColor, 2)
 }
 
 fun moves(board: Board, aiColor: GameColor, stage: Int): Array<Board> {
@@ -85,8 +84,8 @@ fun moves(board: Board, aiColor: GameColor, stage: Int): Array<Board> {
     for (i in board.indices) {
         if (board[i] == aiColor) {
             val candidates =
-                if (stage == 2) neighbors[i]
-                else board.indices.toList().toTypedArray()
+                    if (stage == 2) neighbors[i]
+                    else board.indices.toList().toTypedArray()
             for (neighbor in candidates) {
                 if (board[neighbor] == GameColor.F) {
                     val boardClone = board.copyOf()
@@ -108,9 +107,7 @@ fun heuristics(board: Board, aiColor: GameColor, userColor: GameColor): Int {
     val aiPieces = board.count { x -> x == aiColor }
     val userPieces = board.count { x -> x == userColor }
     val possibleMillsAI = possibleMillsCount(board, aiColor)
-//    val possibleMillsUser = possibleMillsCount(board, userColor)
     val movablePieces = stage23Moves(board, aiColor).size
-//    val potentialMillsAI = potentialMillsPieces(board, aiColor, aiColor, userColor)
     val potentialMillsUser = potentialMillsPieces(board, userColor, aiColor, userColor)
     if (userPieces <= 2 || movablePieces == 0)
         evaluation = Int.MAX_VALUE
@@ -161,7 +158,7 @@ fun potentialMillsPieces(board: Board, color: GameColor, aiColor: GameColor, use
                         count++
                     board[i] = color
                 } else if (board[position] == aiColor
-                    && potentialMills(position, board, aiColor)
+                        && potentialMills(position, board, aiColor)
                 )
                     count++
             }

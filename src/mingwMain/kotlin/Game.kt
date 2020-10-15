@@ -1,7 +1,6 @@
 package ninemensmorris
 
-import platform.posix.ino_t
-import kotlin.system.exitProcess
+import platform.posix.exit
 
 typealias Board = Array<GameColor>
 
@@ -44,6 +43,7 @@ class Game(first: Player) {
                 println("${aiStep.first} ${aiStep.second}")
                 printErr("${aiStep.first} ${aiStep.second}")
                 printBoard(board)
+                evaluateState()
                 val userStep = secondStageUserStep()
                 println("${userStep.first} ${userStep.second}")
                 printErr("${userStep.first} ${userStep.second}")
@@ -53,6 +53,7 @@ class Game(first: Player) {
                 println("${userStep.first} ${userStep.second}")
                 printErr("${userStep.first} ${userStep.second}")
                 printBoard(board)
+                evaluateState()
                 val aiStep = secondStageAIStep()
                 println("${aiStep.first} ${aiStep.second}")
                 printErr("${aiStep.first} ${aiStep.second}")
@@ -71,7 +72,7 @@ class Game(first: Player) {
 
     private fun secondStageUserStep(): Pair<Int, Int> {
         println("Ход пользователя (два числа через пробел): ")
-        val step = validUserStep(board, userColor)
+        val step = validUserStep2(board, userColor)
         val fromPosition = step.first
         val toPosition = step.second
         board[fromPosition] = GameColor.F
@@ -105,52 +106,15 @@ class Game(first: Player) {
             }
 
         nextMovePoint = randomMove(board, aiColor)
-//        turn = Player.USER
         return nextMovePoint
     }
-
-//    private fun firstStageAIStep(step: Int): Int {
-//        println("Ход компьютера: ")
-//        if (step == 1) {
-//            nextMovePoint = randomMove(board, aiColor)
-//        } else {
-//            val point = nextMovePoint
-//            if (!closeMill(point, board)) {
-//                val pointForMill = pointForMill(board, aiColor, point)
-//                if (pointForMill != -1) {
-//                    board[pointForMill] = aiColor
-//                    nextMovePoint = pointForMill
-//                } else {
-//                    val neighbors = neighbors[point]
-//                    for (neighbor in neighbors)
-//                        if (freePlace(board, neighbor)) {
-//                            board[neighbor] = aiColor
-//                            nextMovePoint = neighbor
-//                            break
-//                        } else if (neighbor == neighbors[neighbors.size - 1])
-//                            nextMovePoint = randomMove(board, aiColor)
-//                }
-//            }
-//        }
-//
-//        turn = Player.USER
-//        return nextMovePoint
-//    }
 
     private fun secondStageAIStep(): Pair<Int, Int> {
         print("Ход компьютера: ")
         val move: Pair<Int, Int>
-        val evaluation = alphaBetaPruning(false, board, aiColor, userColor, depth, alpha, beta)
-        if (evaluation.evaluator == Int.MIN_VALUE) {
-            print("Компьютер выиграл")
-            exitProcess(0)
-        } else {
-            move = subtractBoards(board, evaluation.board)
-            board = evaluation.board
-        }
-//        println("${move.first} ${move.second}")
-//        turn = Player.USER
-        printErr("${move.first} ${move.second}")
+        val evaluation = alphaBetaPruning(true, board, aiColor, userColor, depth, alpha, beta)
+        move = subtractBoards(board, evaluation.board)
+        board = evaluation.board
         return move
     }
 
@@ -160,11 +124,11 @@ class Game(first: Player) {
         // TODO проверить на ничью
         if (user <= 2) {
             println("Компьютер выиграл")
-            exitProcess(0)
+            exit(0)
         }
         if (ai <= 2) {
             println("Вы выиграли")
-            exitProcess(3)
+            exit(3)
         }
     }
 }
