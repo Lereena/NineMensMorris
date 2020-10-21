@@ -2,13 +2,12 @@
 <module version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="3" platform="Native " allPlatforms="Native []" useProjectSettings="false" isTestModule="true" externalProjectId="NineMensMorris">
+      <configuration version="3" platform="Native (general) " allPlatforms="Native []/Native [general]" useProjectSettings="false" isTestModule="true" externalProjectId="NineMensMorris">
         <dependsOnModuleNames>NineMensMorris:commonTest</dependsOnModuleNames>
         <sourceSets>
           <sourceSet>NineMensMorris.mingwMain</sourceSet>
         </sourceSets>
         <newMppModelJpsModuleKind>COMPILATION_AND_SOURCE_SET_HOLDER</newMppModelJpsModuleKind>
-        <externalSystemTestTasks>mingwTest|NineMensMorris:mingwTest|mingw</externalSystemTestTasks>
         <compilerSettings />
         <compilerArguments>
           <option name="languageVersion" value="1.3" />

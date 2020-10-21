@@ -1,6 +1,7 @@
 package ninemensmorris
 
-fun readPosition(): Int {
+fun firstStageUserStep(board: Board, userColor: GameColor): Int {
+    println("Ход пользователя:")
     var position: Int?
     while (true) {
         val line = readLine()!!.trim()
@@ -9,57 +10,40 @@ fun readPosition(): Int {
             continue
         }
         position = line.toInt()
-        if (position !in 0..23) {
-            println("Введите число от 0 до 23")
-            continue
+        val validity = validFirstStageStep(board, position)
+
+        if (!validity.first)
+            println(validity.second)
+        else {
+            board[position] = userColor
+            return position
         }
-        return position
     }
 }
 
-fun validUserTo(board: Board): Int {
-    while (true) {
-        val position = readPosition()
-        if (!freePlace(board, position)) {
-            println("Это место уже занято")
-            continue
-        }
-        return position
-    }
-}
-
-fun validUserStep2(board: Board, userColor: GameColor): Pair<Int, Int> {
+fun secondStageUserStep(board: Board, userColor: GameColor): Triple<Int, Int, Int?> {
+    println("Ход пользователя (два числа через пробел):")
     var first: Int?
     var second: Int?
+    var third: Int? = null
+
     while (true) {
         val line = readLine()!!.trim().split(' ')
-        if (line.size != 2) {
-            println("Введите два числа от 0 до 23")
+        if (line.size !in 2..3) {
+            println("Введите два или три числа от 0 до 23")
             continue
         }
+
         first = line[0].toInt()
         second = line[1].toInt()
-        if (first !in 0..23 || second !in 0..23) {
-            println("Введите два числа от 0 до 23")
-            continue
-        }
-        if (board[first] != userColor) {
-            println("На этой позиции нет вашей фишки")
-            continue
-        }
-        if (!freePlace(board, second)) {
-            println("Это место уже занято")
-            continue
-        }
-        if (second == first) {
-            println("Фишка уже на этой позиции")
-            continue
-        }
-        val userCount = board.count { x -> x == userColor }
-        if (userCount > 3 && !neighbors[first].contains(second)) {
-            println("На этой стадии вы не можете двигаться не по линиям")
-            continue
-        }
-        return Pair(first, second)
+        if (line.size == 3)
+            third = line[2].toInt()
+
+        val validity = validSecondStageStep(board, Triple(first, second, third), userColor)
+
+        if (!validity.first)
+            println(validity.second)
+        else
+            return Triple(first, second, third)
     }
 }

@@ -1,139 +1,114 @@
 package ninemensmorris
+import kotlin.system.exitProcess
 
-import platform.posix.exit
+enum class GameColor { B, W, F }
+enum class Player { AI, USER }
 
-typealias Board = Array<GameColor>
-
-class Game(first: Player) {
-    var board: Board = Array(24) { GameColor.F }
-    private val userColor: GameColor = if (first == Player.USER) GameColor.W else GameColor.B
-    private val aiColor: GameColor = if (first == Player.AI) GameColor.W else GameColor.B
-    private var turn: Player = first
-    private var nextMovePoint = 0
-    private val depth = 3
-    private val alpha = Int.MIN_VALUE;
-    private val beta = Int.MAX_VALUE
+class Game(val first: Player) {
+    var board: Board = Board(Array(24) { GameColor.F })
+    private val userColor = if (first == Player.USER) GameColor.W else GameColor.B
+    private val aiColor = if (first == Player.AI) GameColor.W else GameColor.B
+    private val memorisedPositions: HashMap<Int, Int> = HashMap()
+    private var lastAiMove: Int = 0
 
     fun start() {
         println("Первая стадия: начальная расстановка")
+        board.print()
         for (step in 1..9) {
-            if (turn == Player.USER) {
-                val userStep = firstStageUserStep()
-                println("$userStep")
-                printBoard(board)
-                val aiStep = firstStageAIStep(step)
-                printErr("$aiStep")
-                println("$aiStep")
-                printBoard(board)
-            } else {
-                val aiStep = firstStageAIStep(step)
-                println("$aiStep")
-                printErr("$aiStep")
-                printBoard(board)
-                val userStep = firstStageUserStep()
-                println("$userStep")
-                printBoard(board)
-            }
+            if (first == Player.AI)
+                aiUserFirstStageStep(step)
+            else
+                userAiFirstStageStep(step)
         }
 
         println("Вторая стадия: движение")
         while (true) {
-            if (turn == Player.AI) {
-                val aiStep = secondStageAIStep()
-                println("${aiStep.first} ${aiStep.second}")
-                printErr("${aiStep.first} ${aiStep.second}")
-                printBoard(board)
-                evaluateState()
-                val userStep = secondStageUserStep()
-                println("${userStep.first} ${userStep.second}")
-                printErr("${userStep.first} ${userStep.second}")
-                printBoard(board)
-            } else {
-                val userStep = secondStageUserStep()
-                println("${userStep.first} ${userStep.second}")
-                printErr("${userStep.first} ${userStep.second}")
-                printBoard(board)
-                evaluateState()
-                val aiStep = secondStageAIStep()
-                println("${aiStep.first} ${aiStep.second}")
-                printErr("${aiStep.first} ${aiStep.second}")
-                printBoard(board)
-            }
-            evaluateState()
+            if (first == Player.AI)
+                aiUserSecondStageStep()
+            else
+                userAiSecondStageStep()
         }
     }
 
-    private fun firstStageUserStep(): Int {
-        println("Ход пользователя: ")
-        val position = validUserTo(board)
-        board[position] = userColor
-        return position
+    private fun aiUserFirstStageStep(step: Int) {
+        val aiStep = firstStageAiStep(board, step, lastAiMove, aiColor)
+        lastAiMove = aiStep
+        println("$aiStep")
+        printErr("$aiStep")
+        board.print()
+        val userStep = firstStageUserStep(board, userColor)
+        println("$userStep")
+        board.print()
     }
 
-    private fun secondStageUserStep(): Pair<Int, Int> {
-        println("Ход пользователя (два числа через пробел): ")
-        val step = validUserStep2(board, userColor)
-        val fromPosition = step.first
-        val toPosition = step.second
-        board[fromPosition] = GameColor.F
-        board[toPosition] = userColor
-        return step
+    private fun userAiFirstStageStep(step: Int) {
+        val userStep = firstStageUserStep(board, userColor)
+        println("$userStep")
+        board.print()
+        val aiStep = firstStageAiStep(board, step, lastAiMove, aiColor)
+        lastAiMove = aiStep
+        println("$aiStep")
+        printErr("$aiStep")
+        board.print()
     }
 
-    private fun firstStageAIStep(step: Int): Int {
-        println("Ход компьютера: ")
-        if (step == 1) {
-            nextMovePoint = randomMove(board, aiColor)
-            return nextMovePoint
-        }
+    private fun aiUserSecondStageStep() {
+        val aiStep = secondStageAiStep(board, aiColor)
+        printErr("${aiStep.first} ${aiStep.second} ${if (aiStep.third != null) aiStep.third.toString() else ""}")
+        println("${aiStep.first} ${aiStep.second} ${if (aiStep.third != null) aiStep.third.toString() else ""}")
+//        printErr("${aiStep.first} ${aiStep.second}")
+        board.print()
+        memorisePosition(board)
+        evaluateState()
 
-        val point = nextMovePoint
-        if (!closeMill(point, board)) {
-            val pointForMill = pointForMill(board, aiColor, point)
-            if (pointForMill != -1) {
-                board[pointForMill] = aiColor
-                nextMovePoint = pointForMill
-                return nextMovePoint
-            }
-        }
-
-        val neighbors = neighbors[point]
-        for (neighbor in neighbors)
-            if (freePlace(board, neighbor)) {
-                board[neighbor] = aiColor
-                nextMovePoint = neighbor
-                return nextMovePoint
-            }
-
-        nextMovePoint = randomMove(board, aiColor)
-        return nextMovePoint
+        val userStep = secondStageUserStep(board, userColor)
+        println("${userStep.first} ${userStep.second} ${if (userStep.third != null) userStep.third.toString() else ""}")
+//        printErr("${userStep.first} ${userStep.second}")
+        board.print()
+        memorisePosition(board)
+        evaluateState()
     }
 
-    private fun secondStageAIStep(): Pair<Int, Int> {
-        print("Ход компьютера: ")
-        val move: Pair<Int, Int>
-        val evaluation = alphaBetaPruning(true, board, aiColor, userColor, depth, alpha, beta)
-        move = subtractBoards(board, evaluation.board)
-        board = evaluation.board
-        return move
+    private fun userAiSecondStageStep() {
+        val userStep = secondStageUserStep(board, userColor)
+        println("${userStep.first} ${userStep.second} ${if (userStep.third != null) userStep.third.toString() else ""}")
+//        printErr("${userStep.first} ${userStep.second}")
+        board.print()
+        memorisePosition(board)
+        evaluateState()
+        val aiStep = secondStageAiStep(board, aiColor)
+        printErr("${aiStep.first} ${aiStep.second} ${if (aiStep.third != null) aiStep.third.toString() else ""}")
+        println("${aiStep.first} ${aiStep.second} ${if (aiStep.third != null) aiStep.third.toString() else ""}")
+//        printErr("${aiStep.first} ${aiStep.second}")
+        board.print()
+        memorisePosition(board)
+        evaluateState()
+    }
+
+    private fun memorisePosition(position: Board) {
+        val hash = position.hashCode()
+
+        if (memorisedPositions.containsKey(hash))
+            memorisedPositions[hash] = memorisedPositions[hash]!! + 1
+        else
+            memorisedPositions[hash] = 1
     }
 
     private fun evaluateState() {
-        val user = board.count { x -> x == userColor }
-        val ai = board.count { x -> x == aiColor }
-        // TODO проверить на ничью
+        val user = board.count(userColor)
+        val ai = board.count(userColor)
+
+        if (memorisedPositions.containsValue(3)) {
+            println("Ничья")
+            exitProcess(4)
+        }
         if (user <= 2) {
             println("Компьютер выиграл")
-            exit(0)
+            exitProcess(0)
         }
         if (ai <= 2) {
             println("Вы выиграли")
-            exit(3)
+            exitProcess(2)
         }
     }
 }
-
-enum class Player { AI, USER }
-enum class GameColor { B, W, F }
-
-class Evaluation(var evaluator: Int = 0, var board: Board = Array(0) { GameColor.F })
