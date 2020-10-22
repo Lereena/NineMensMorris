@@ -1,8 +1,8 @@
 package ninemensmorris
 
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.random.Random
-
-class EvaluatedBoard(var board: Board = Board(Array(0) { GameColor.F }), var characteristics: Int = Int.MIN_VALUE)
 
 fun firstStageAiStep(board: Board, step: Int, lastMove: Int, aiColor: GameColor): Int {
     println("Ход компьютера:")
@@ -32,17 +32,24 @@ fun firstStageAiStep(board: Board, step: Int, lastMove: Int, aiColor: GameColor)
 
 fun secondStageAiStep(board: Board, aiColor: GameColor): Triple<Int, Int, Int?> {
     println("Ход компьютера:")
-    val move = bestMove(board, aiColor, oppositeColor(aiColor)).board
-//    val move = randomSecondStageMove(board, aiColor)
-//    val move = bestMove2(board, aiColor, )
+    val configurations = board.possibleMoves(aiColor)
+    var bestMove = board
+    var bestScore = Int.MAX_VALUE
+    for (configuration in configurations) {
+        val score = alphaBetaPruning(board, oppositeColor(aiColor), depth = 4)
+        if (bestScore > score) {
+            bestScore = score
+            bestMove = configuration
+        }
+    }
 
-    return move.difference(board, aiColor)
+    return bestMove.difference(board, aiColor)
 }
 
 fun randomSecondStageMove(board: Board, aiColor: GameColor): Board {
     val board = board.copyOf()
-    val aiPositions = findBelongingPositions(board, aiColor)
-    val freePositions = findBelongingPositions(board, GameColor.F)
+    val aiPositions = board.belongingPositions(aiColor)
+    val freePositions = board.belongingPositions(GameColor.F)
     var fromPosition = aiPositions[Random.nextInt(0, aiPositions.size)]
 
     var candidates = if (aiPositions.size > 3) neighbors[fromPosition].filter { x -> board.freePlace(x) }.toTypedArray()
@@ -58,7 +65,7 @@ fun randomSecondStageMove(board: Board, aiColor: GameColor): Board {
 
     var removePosition: Int? = null
     if (board.closeMill(toPosition, aiColor)) {
-        val opponentPositions = findBelongingPositions(board, oppositeColor(aiColor))
+        val opponentPositions = board.belongingPositions(oppositeColor(aiColor))
         removePosition = opponentPositions[Random.nextInt(0, opponentPositions.size)]
     }
 
@@ -67,74 +74,38 @@ fun randomSecondStageMove(board: Board, aiColor: GameColor): Board {
     if (removePosition != null)
         board[removePosition] = GameColor.F
 
-//    return Triple(fromPosition, toPosition, removePosition)
     return board
 }
 
-fun findBelongingPositions(board: Board, color: GameColor): ArrayList<Int> {
-    val result = ArrayList<Int>()
-    for (i in board.indices)
-        if (board[i] == color)
-            result.add(i)
-    return result
-}
-
-//fun bestMove2(board: Board, playerColor: GameColor, alpha: Int, beta: Int, depth: Int = 3): Board {
-//    var bestBoard: EvaluatedBoard
-//    var heuristics: Int
-//    if (board.count(playerColor) <= 2 || board.count(oppositeColor(playerColor)) <= 2 || depth == 0) {
-//        bestBoard = EvaluatedBoard()
-//        bestBoard.characteristics = heuristics(board, playerColor)
-//        return bestBoard.board
-//    }
-//
-//    val score = if (playerColor == GameColor.W) Int.MIN_VALUE else Int.MAX_VALUE
-//    val comparison: Boolean
-//
-//    val possibleConfigurations = board.possibleMoves(playerColor).distinct()
-//    for (configuration in possibleConfigurations) {
-//        val currentBoard = bestMove2(configuration, )
-//    }
-//}
-
-
-fun bestMove(
-    board: Board, playerColor: GameColor, opponentColor: GameColor, depth: Int = 3,
-    alpha: Int = Int.MIN_VALUE, beta: Int = Int.MAX_VALUE, firstPlayer: Boolean = true
-): EvaluatedBoard {
-    val finalBoard = EvaluatedBoard(board)
+fun alphaBetaPruning(board: Board, playerColor: GameColor, depth: Int = 3, alpha: Int = Int.MIN_VALUE, beta: Int = Int.MAX_VALUE, maximizing: Boolean = false): Int {
     var currentAlpha = alpha
     var currentBeta = beta
-
     if (depth == 0) {
-        finalBoard.characteristics = heuristics(board, playerColor)
-        return finalBoard
+        return heuristics(board, playerColor)
     }
 
     val possibleConfigurations = board.possibleMoves(playerColor).distinct()
 
-    for (configuration in possibleConfigurations) {
-        val currentBoard =
-            bestMove(board, opponentColor, playerColor, depth - 1, currentAlpha, currentBeta, !firstPlayer)
-        if (firstPlayer) {
-            if (currentBoard.characteristics > currentAlpha) {
-                currentAlpha = currentBoard.characteristics
-                finalBoard.board = configuration
-                finalBoard.characteristics = currentAlpha
-            }
-        } else {
-            if (currentBoard.characteristics < currentBeta) {
-                currentBeta = currentBoard.characteristics
-                finalBoard.board = configuration
-                finalBoard.characteristics = currentBeta
-            }
+    if (maximizing) {
+        var score = Int.MIN_VALUE
+        for (configuration in possibleConfigurations) {
+            score = max(score, alphaBetaPruning(configuration, oppositeColor(playerColor), depth - 1, currentAlpha, currentBeta, false))
+            currentAlpha = max(currentAlpha, score)
+            if (currentAlpha >= currentBeta)
+                break
         }
-        if (currentAlpha >= currentBeta)
-            break
+        return score
+    } else {
+        var score = Int.MAX_VALUE
+        for (configuration in possibleConfigurations) {
+            score = min(score, alphaBetaPruning(configuration, oppositeColor(playerColor), depth - 1, currentAlpha, currentBeta, true))
+            currentBeta = min(currentBeta, score)
+            if (currentBeta <= currentAlpha)
+                break
+        }
+        return score
     }
 
-    finalBoard.characteristics = if (firstPlayer) currentAlpha else currentBeta
-    return finalBoard
 }
 
 fun randomMove(board: Board, playerColor: GameColor): Int {

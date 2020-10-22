@@ -28,12 +28,17 @@ fun validSecondStageStep(board: Board, positions: Triple<Int, Int, Int?>, player
 }
 
 fun heuristics(board: Board, playerColor: GameColor): Int {
-    return board.count(playerColor)
+    val opponentColor = oppositeColor(playerColor)
+
+    val pieces = board.count(playerColor) - board.count(opponentColor)
+    val mills = board.possibleMillsCount(playerColor) - board.possibleMillsCount(opponentColor)
+    val blockedPieces = board.blockedPieces(opponentColor) - board.blockedPieces(playerColor)
+
+    return pieces + mills + blockedPieces
 }
 
 //fun heuristics(board: Board, playerColor: GameColor): Int {
-//    val opponentColor = if (playerColor == GameColor.B) GameColor.W else GameColor.B
-//    var evaluation = 0
+//    val opponentColor = oppositeColor(playerColor)
 //
 //    val playerPieces = board.count(playerColor)
 //    val opponentPieces = board.count(opponentColor)
@@ -47,15 +52,15 @@ fun heuristics(board: Board, playerColor: GameColor): Int {
 //    if (opponentPieces <= 2)
 //        return Int.MAX_VALUE
 //
-//    evaluation += if (playerPieces < 4)
-//        100 * possiblePlayerMills + 200 * potentialOpponentMills
+//    var score = if (playerPieces < 4)
+//        100 * possiblePlayerMills - 200 * potentialOpponentMills
 //    else
-//        200 * possiblePlayerMills + 100 * potentialOpponentMills
+//        200 * possiblePlayerMills - 100 * potentialOpponentMills
 //
-//    evaluation -= 25 * possiblePlayerMoves
-//    evaluation += 50 * (opponentPieces - playerPieces)
+//    score += 25 * possiblePlayerMoves
+//    score += 50 * (playerPieces - opponentPieces)
 //
-//    return evaluation
+//    return score
 //}
 
 fun oppositeColor(color: GameColor): GameColor {

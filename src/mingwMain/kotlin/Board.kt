@@ -59,6 +59,32 @@ class Board(var b: Array<GameColor>) {
         return boards.toTypedArray()
     }
 
+    fun blockedPieces(playerColor: GameColor): Int {
+        val opponentColor = oppositeColor(playerColor)
+        var count = 0
+
+        for (position in belongingPositions(playerColor)) {
+            val neighbors = neighbors[position]
+            var blockingNeighborsCount = 0
+            for (neighbor in neighbors) {
+                if (this[neighbor] == opponentColor)
+                    blockingNeighborsCount++
+            }
+            if (blockingNeighborsCount == neighbors.size)
+                count++
+        }
+        return count
+    }
+
+    fun belongingPositions(color: GameColor): ArrayList<Int> {
+        val result = ArrayList<Int>()
+        for (i in indices)
+            if (this[i] == color)
+                result.add(i)
+        return result
+    }
+
+
     fun difference(oldBoard: Board, playerColor: GameColor? = null): Triple<Int, Int, Int?> {
         var from = -1
         var to = -1

@@ -98,9 +98,13 @@ class Game(val first: Player) {
     private fun memorisePosition(position: Board) {
         val hash = position.hashCode()
 
-        if (memorisedPositions.containsKey(hash))
+        if (memorisedPositions.containsKey(hash)) {
             memorisedPositions[hash] = memorisedPositions[hash]!! + 1
-        else
+            if (memorisedPositions[hash] == 2) {
+                println("Ничья")
+                exitProcess(4)
+            }
+        } else
             memorisedPositions[hash] = 1
     }
 
@@ -121,8 +125,6 @@ class Game(val first: Player) {
         val user = board.count(userColor)
         val ai = board.count(aiColor)
 
-        if (memorisedPositions.containsValue(3))
-            return Pair(true, 4)
         if (user <= 2)
             return Pair(true, 0)
         if (ai <= 2)
