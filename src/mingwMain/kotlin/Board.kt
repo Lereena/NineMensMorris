@@ -25,19 +25,10 @@ class Board(var b: Array<GameColor>) {
         return closeMill(i, playerColor) && b[i] == playerColor
     }
 
-    fun removePiece(i: Int): Boolean {
-        if (b[i] != GameColor.F) {
-            b[i] = GameColor.F
-            return true
-        }
-
-        return false
-    }
-
     fun possibleMillsCount(playerColor: GameColor): Int {
         var count = 0
         for (i in indices)
-            if (freePlace(i) && closeMill(i, playerColor))
+            if (neighbors[i].any { x -> b[x] == playerColor } && freePlace(i) && closeMill(i, playerColor))
                 count++
 
         return count
@@ -50,14 +41,14 @@ class Board(var b: Array<GameColor>) {
         for (i in this.indices) {
             if (b[i] == playerColor) {
                 val candidates =
-                        if (stage == 2) neighbors[i]
-                        else b.indices.toList().toTypedArray()
+                    if (stage == 2) neighbors[i]
+                    else b.indices.toList().toTypedArray()
                 for (candidate in candidates) {
                     if (freePlace(candidate)) {
                         val boardClone = copyOf()
                         boardClone[i] = GameColor.F
                         boardClone[candidate] = playerColor
-                        if (boardClone.closeMill(candidate, playerColor))
+                        if (boardClone.inMill(candidate, playerColor))
                             boards.addAll(movesIfRemovePiece(boardClone, playerColor))
                         else
                             boards.add(boardClone)

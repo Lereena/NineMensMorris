@@ -28,37 +28,35 @@ fun validSecondStageStep(board: Board, positions: Triple<Int, Int, Int?>, player
 }
 
 fun heuristics(board: Board, playerColor: GameColor): Int {
-    val opponentColor = if (playerColor == GameColor.B) GameColor.W else GameColor.B
-    var evaluation = 0
-
-    val playerPieces = board.count(playerColor)
-    val opponentPieces = board.count(opponentColor)
-    val possiblePlayerMills = board.possibleMillsCount(playerColor)
-    val possiblePlayerMoves = board.possibleMoves(playerColor).size
-    val potentialOpponentMills = board.possibleMillsCount(playerColor)
-
-    if (playerPieces <= 2 || possiblePlayerMoves == 0)
-        return Int.MIN_VALUE
-
-    if (opponentPieces <= 2)
-        return Int.MAX_VALUE
-
-    evaluation += if (playerPieces < 4)
-        100 * possiblePlayerMills + 200 * potentialOpponentMills
-    else
-        200 * possiblePlayerMills + 100 * potentialOpponentMills
-
-    evaluation -= 25 * possiblePlayerMoves
-    evaluation += 50 * (opponentPieces - playerPieces)
-
-    return evaluation
+    return board.count(playerColor)
 }
 
-fun drawCheck(board: Board, userColor: GameColor, aiColor: GameColor) : Boolean {
-//    val userPossibleMoves = possibleMoves(board, userColor)
-//    val aiPossibleMoves = possibleMoves(board, userColor)
-    return false
-}
+//fun heuristics(board: Board, playerColor: GameColor): Int {
+//    val opponentColor = if (playerColor == GameColor.B) GameColor.W else GameColor.B
+//    var evaluation = 0
+//
+//    val playerPieces = board.count(playerColor)
+//    val opponentPieces = board.count(opponentColor)
+//    val possiblePlayerMills = board.possibleMillsCount(playerColor)
+//    val possiblePlayerMoves = board.possibleMoves(playerColor).size
+//    val potentialOpponentMills = board.possibleMillsCount(playerColor)
+//
+//    if (playerPieces <= 2 || possiblePlayerMoves == 0)
+//        return Int.MIN_VALUE
+//
+//    if (opponentPieces <= 2)
+//        return Int.MAX_VALUE
+//
+//    evaluation += if (playerPieces < 4)
+//        100 * possiblePlayerMills + 200 * potentialOpponentMills
+//    else
+//        200 * possiblePlayerMills + 100 * potentialOpponentMills
+//
+//    evaluation -= 25 * possiblePlayerMoves
+//    evaluation += 50 * (opponentPieces - playerPieces)
+//
+//    return evaluation
+//}
 
 fun oppositeColor(color: GameColor): GameColor {
     return when (color) {

@@ -1,4 +1,5 @@
 package ninemensmorris
+
 import kotlin.system.exitProcess
 
 enum class GameColor { B, W, F }
@@ -53,36 +54,45 @@ class Game(val first: Player) {
     }
 
     private fun aiUserSecondStageStep() {
+        evaluateState()
         val aiStep = secondStageAiStep(board, aiColor)
+        applyMove(aiStep)
         printErr("${aiStep.first} ${aiStep.second} ${if (aiStep.third != null) aiStep.third.toString() else ""}")
         println("${aiStep.first} ${aiStep.second} ${if (aiStep.third != null) aiStep.third.toString() else ""}")
-//        printErr("${aiStep.first} ${aiStep.second}")
         board.print()
         memorisePosition(board)
         evaluateState()
 
         val userStep = secondStageUserStep(board, userColor)
+        applyMove(userStep)
         println("${userStep.first} ${userStep.second} ${if (userStep.third != null) userStep.third.toString() else ""}")
-//        printErr("${userStep.first} ${userStep.second}")
         board.print()
         memorisePosition(board)
         evaluateState()
     }
 
     private fun userAiSecondStageStep() {
+        evaluateState()
         val userStep = secondStageUserStep(board, userColor)
+        applyMove(userStep)
         println("${userStep.first} ${userStep.second} ${if (userStep.third != null) userStep.third.toString() else ""}")
-//        printErr("${userStep.first} ${userStep.second}")
         board.print()
         memorisePosition(board)
         evaluateState()
         val aiStep = secondStageAiStep(board, aiColor)
+        applyMove(aiStep)
         printErr("${aiStep.first} ${aiStep.second} ${if (aiStep.third != null) aiStep.third.toString() else ""}")
         println("${aiStep.first} ${aiStep.second} ${if (aiStep.third != null) aiStep.third.toString() else ""}")
-//        printErr("${aiStep.first} ${aiStep.second}")
         board.print()
         memorisePosition(board)
         evaluateState()
+    }
+
+    private fun applyMove(move: Triple<Int, Int, Int?>) {
+        board[move.second] = board[move.first]
+        board[move.first] = GameColor.F
+        if (move.third != null)
+            board[move.third!!] = GameColor.F
     }
 
     private fun memorisePosition(position: Board) {
@@ -95,20 +105,29 @@ class Game(val first: Player) {
     }
 
     private fun evaluateState() {
-        val user = board.count(userColor)
-        val ai = board.count(userColor)
+        val evaluation = gameState()
+        if (!evaluation.first)
+            return
 
-        if (memorisedPositions.containsValue(3)) {
-            println("Ничья")
-            exitProcess(4)
+        when (evaluation.second) {
+            0 -> println("Бот выиграл")
+            3 -> println("Вы выиграли")
+            4 -> println("Ничья")
         }
-        if (user <= 2) {
-            println("Компьютер выиграл")
-            exitProcess(0)
-        }
-        if (ai <= 2) {
-            println("Вы выиграли")
-            exitProcess(2)
-        }
+        exitProcess(evaluation.second!!)
+    }
+
+    fun gameState(): Pair<Boolean, Int?> {
+        val user = board.count(userColor)
+        val ai = board.count(aiColor)
+
+        if (memorisedPositions.containsValue(3))
+            return Pair(true, 4)
+        if (user <= 2)
+            return Pair(true, 0)
+        if (ai <= 2)
+            return Pair(true, 3)
+
+        return Pair(false, null)
     }
 }
